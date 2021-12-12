@@ -7,7 +7,7 @@ used sources:
 */
 
 const express = require('express')
-const {Client} = require('mongodb')
+const {MongoClient} = require('mongodb')
 const bodyParser = require('body-parser')
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -16,7 +16,7 @@ app.use(express.static('public'))
 app.use(bodyParser.json())
 
 const uri = "mongodb+srv://courseProjectRestApi:ThisIsThePassword@cluster0.ruiua.mongodb.net/Courseproject?retryWrites=true&w=majority";
-const client = new Client(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 //temp
