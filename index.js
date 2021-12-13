@@ -7,12 +7,14 @@ used sources:
 */
 
 const express = require('express')
+const cors = require('cors')
 const {MongoClient} = require('mongodb')
 const bodyParser = require('body-parser')
 const app = express()
 const PORT = process.env.PORT || 3000
 
 app.use(express.static('public'))
+app.use(cors())
 app.use(bodyParser.json())
 
 const uri = "mongodb+srv://courseProjectRestApi:ThisIsThePassword@cluster0.ruiua.mongodb.net/Courseproject?retryWrites=true&w=majority";
@@ -30,7 +32,7 @@ app.get('/', async (req, res) => {
 
 app.post('/create-account', async (req, res) => {
 
-    if (!req.body.username || !req.body.password || !req.body.email || !req.body.firstname || !req.body.lastname) {
+    if ( !req.body.username || !req.body.password || !req.body.email || !req.body.firstname || !req.body.lastname ) {
         res.status(400).send("please fill everything in");
         return
     }
@@ -63,7 +65,7 @@ app.post('/create-account', async (req, res) => {
             "password": req.body.password,
         };
 
-        let insertuser = await data.insert(newuser)
+        let insertuser = await data.insertOne(newuser)
         res.status(200).send("successfully created new useraccount")
     } catch (error) {
         console.log(error);
