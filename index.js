@@ -47,33 +47,38 @@ app.post('/create-account', async (req, res) => {
         const checkemail = await data.findOne({
             email: req.body.email
         })
-
+        console.log(checkusername);
         if (checkusername){
-            res.status(409).send("the username is already taken")
+            res.status(409).send({error: "the username is already taken"});
             return
         } 
         if (checkemail){
-            res.status(409).send("the Email is already taken")
+            res.status(409).send({error: "the Email is already taken"});
             return
         }
+        if (checkusername == null && checkemail == null) {
+            let newuser = {
+                "username": req.body.username,
+                "email": req.body.email,
+                "firstname": req.body.firstname,
+                "lastname": req.body.lastname,
+                "password": req.body.password,
+            };
+    
+            let insertuser = await data.insertOne(newuser);
+            res.send(await data.distinct("_id", {"username": newuser.username}));
+            res.status(200).send({succes: "successfully created new useraccount"});
+        }
         
-        let newuser = {
-            "username": req.body.username,
-            "email": req.body.email,
-            "firstname": req.body.firstname,
-            "lastname": req.body.lastname,
-            "password": req.body.password,
-        };
-
-        let insertuser = await data.insertOne(newuser)
-        res.status(200).send("successfully created new useraccount")
     } catch (error) {
         console.log(error);
-        res.status(406).send(error)
+        res.status(406).send(error.message); 
     } finally{
-
         await client.close();
     }
+
+})
+
 
 })
 
