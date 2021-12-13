@@ -79,7 +79,37 @@ app.post('/create-account', async (req, res) => {
 
 })
 
+app.post('/login', async (req, res) => {
+    if ( !req.body.username || !req.body.password){
+        res.status(401).send({error: "please fill in all fields"});
+        return
+    }
 
+    try {
+        await client.connect();
+        data = await client.db().collection("user_data");
+        checkusername = await data.findOne({username: req.body.username});
+        if(checkusername == null) {
+            console.log('test 2');
+            res.status(404).send({error: "username or password is wrong"});
+            return
+        } else{
+            const userdata = await data.findOne({username: req.body.username});
+            if (userdata.password == req.body.password) {
+                const userId = userdata._id.toString();
+                res.send(await data.distinct("_id", {"username": req.body.username}));
+                console.log(userId);
+            } else{
+                res.status(401).send({error: 'username or password is wrong'})
+            }
+            
+        }
+    }catch(error){
+        console.log(error);
+        res.status(406).send(error.message);
+    } finally{
+        await client.close();
+    }
 })
 
 
