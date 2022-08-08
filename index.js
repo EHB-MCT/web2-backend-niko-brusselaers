@@ -4,7 +4,7 @@ used sources:
     WEB II - session 7 - Fullstack Web - Team Amina https://github.com/EHB-MCT/web2-groupproject-backend-team-amina
 
 */
-
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const {
@@ -21,7 +21,7 @@ app.use(cors())
 app.use(bodyParser.json())
 
 
-const uri = 'mongodb+srv://courseProjectRestApi:lku89x5Akots6b0a@cluster0.ruiua.mongodb.net/?retryWrites=true&w=majority';
+const uri = `mongodb+srv://${process.env.mongodbUsername}:${process.env.mongodbPassword}@cluster0.ruiua.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
