@@ -8,7 +8,9 @@ used sources:
 const express = require('express')
 const cors = require('cors')
 const {
-    MongoClient
+    MongoClient,
+    ServerApiVersion,
+    ObjectId
 } = require('mongodb')
 const bodyParser = require('body-parser')
 const app = express()
@@ -18,10 +20,12 @@ app.use(express.static('public'))
 app.use(cors())
 app.use(bodyParser.json())
 
-const uri = "mongodb+srv://courseProjectRestApi:ThisIsThePassword@cluster0.ruiua.mongodb.net/Courseproject?retryWrites=true&w=majority";
+
+const uri = 'mongodb+srv://courseProjectRestApi:lku89x5Akots6b0a@cluster0.ruiua.mongodb.net/?retryWrites=true&w=majority';
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1
 });
 
 
@@ -49,21 +53,21 @@ app.post('/create-account', async (req, res) => {
         // make connection to database and perfrom a check if the username and/or the email is already taken
         await client.connect();
         const data = client.db().collection('user_data');
-        const checkusername = await data.findOne({
+        const checkUsername = await data.findOne({
             username: req.body.username
         });
 
-        const checkemail = await data.findOne({
+        const checkEmail = await data.findOne({
             email: req.body.email
         })
-        console.log(checkusername);
-        if (checkusername) {
+        console.log(checkUsername);
+        if (checkUsername) {
             res.status(409).send({
                 error: "the username is already taken"
             });
             return
         }
-        if (checkemail) {
+        if (checkEmail) {
             res.status(409).send({
                 error: "the Email is already taken"
             });
@@ -71,7 +75,7 @@ app.post('/create-account', async (req, res) => {
         }
         //if username and email are not taken, the new account will be created and stored on the database
         if (checkusername == null && checkemail == null) {
-            let newuser = {
+            const newuser = {
                 "username": req.body.username,
                 "email": req.body.email,
                 "firstname": req.body.firstname,
@@ -79,7 +83,7 @@ app.post('/create-account', async (req, res) => {
                 "password": req.body.password,
             };
 
-            let insertuser = await data.insertOne(newuser);
+            let insertUser = await data.insertOne(newuser);
             const userId = await data.distinct("_id", {
                 "username": newuser.username
             })
@@ -112,13 +116,13 @@ app.post('/login', async (req, res) => {
     // makes connection to the database and searches the username inside the database
     try {
         await client.connect();
-        data = await client.db().collection("user_data");
-        checkusername = await data.findOne({
+        const userData = await client.db("Courseproject").collection("user_data");
+        const checkUsername = await data.findOne({
             username: req.body.username
         });
         // if the filled in username is not found, return a error with a message
-        if (checkusername == null) {
-            console.log('test 2');
+        if (checkUsername == null) {
+            console.log("username doesn't exist");
             res.status(404).send({
                 error: "username or password is wrong"
             });
@@ -158,9 +162,12 @@ app.post('/login', async (req, res) => {
 
 //function to retrieve all events from the database 
 app.get('/events', async (req, res) => {
+    console.log("reading events from the database");
     try {
         await client.connect();
-        data = await client.db().collection("events");
+        const data = await client.db("Courseproject").collection("events");
+        events = await data.find().toArray()
+        res.status(200).send(events)
         // if there is any problem, the api will send the error back and also display it inside the console
     } catch (error) {
         console.log(error);
@@ -176,7 +183,58 @@ app.get('/events', async (req, res) => {
 
 // function to create  new events
 app.post('/createEvent', async (req, res) => {
-    
+    //check if all fields are filled
+    if (!req.body.userId || !req.body.title || !req.body.description || !req.body.startDate || !req.body.endDate || !req.body.organisator || !req.body.price || !req.body.location) {
+        console.log("missing fields");
+        res.status(400).send("please fill in all fields");
+    } else {
+        // checking if the userId exist in our database
+        await client.connect();
+        const userData = await client.db("Courseproject").collection("user_data");
+        const checkUserId = await userData.findOne({
+            _id: ObjectId(req.body.userId)
+        });
+        // if userId doesn't exist, return error code with message
+        if (checkUserId == null) {
+            console.log("userId is invalid");
+            res.status(401).send("userId is invalid")
+        } else {
+            // if userId exist, create a new object where we store all event details.
+            console.log(checkUserId._id);
+            const newEvent = {
+                "title": req.body.title,
+                "description": req.body.description,
+                "startDate": req.body.startDate,
+                "endDate": req.body.endDate,
+                "organisator": req.body.organisator,
+                "price": req.body.price,
+                "location": req.body.location,
+                "img": req.body.img
+            };
+            // check if there isn't a event already with the same title
+            const eventData = await client.db("Courseproject").collection("events");
+            const checkEvent = await eventData.findOne({
+                title: newEvent.title
+            })
+            console.log(checkEvent);
+            // if there is no event with same title, store new event in database
+            if (checkEvent == null) {
+                let insertEvent = await eventData.insertOne(newEvent);
+                const eventId = await eventData.distinct("_id", {
+                    "title": newEvent.title
+                })
+                console.log(eventId);
+                res.status(200).send(eventId);
+            } else {
+                res.status(400).send("event already exists")
+            }
+
+
+        }
+
+
+    }
+
 })
 
 
