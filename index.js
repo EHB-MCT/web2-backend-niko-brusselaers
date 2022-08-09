@@ -117,36 +117,88 @@ app.post('/login', async (req, res) => {
     try {
         await client.connect();
         const userData = await client.db("Courseproject").collection("user_data");
-        const checkUsername = await data.findOne({
+        const checkUsername = await userData.findOne({
             username: req.body.username
         });
         // if the filled in username is not found, return a error with a message
         if (checkUsername == null) {
             console.log("username doesn't exist");
-            res.status(404).send({
+            res.status(401).send({
                 error: "username or password is wrong"
             });
             return
         } else {
-            const userdata = await data.findOne({
+            const username = await userData.findOne({
                 username: req.body.username
             });
             // if both username and password are correct, return userId so that the user stays logged in
-            if (userdata.password == req.body.password) {
-                const userId = await data.distinct("_id", {
+            if (username.password == req.body.password) {
+                const userId = await userData.distinct("_id", {
                     "username": req.body.username
                 })
                 res.status(200).send({
                     succes: "successfully logged in",
-                    id: userId
+                    id: userId,
+                    username: req.body.username
                 });
                 // if the password is wrong,  return a error with a message
             } else {
-                res.status(404).send({
+                res.status(401).send({
                     error: 'username or password is wrong'
                 })
             }
 
+        }
+        // if there is any problem, the api will send the error back and also display it inside the console
+    } catch (error) {
+        console.log(error);
+        res.status(406).send({
+            error
+        });
+        // close the connection to the database
+    } finally {
+        await client.close();
+    }
+})
+
+// function to login with userId
+app.post('/loginId', async (req, res) => {
+    // check if the username and password fields are filled
+    if (!req.body.username || !req.body.userId) {
+        res.status(401).send({
+            error: "no user Id provided"
+        });
+        return
+    }
+    // makes connection to the database and searches if the userId exists
+    try {
+        await client.connect();
+        const userData = await client.db("Courseproject").collection("user_data");
+        const userId = await userData.distinct("_id", {
+            "username": req.body.username
+        })
+        // if userId doesn't exist, return a error with a message
+        if (userId == null) {
+            console.log(userId);
+            console.log("userId isnt valid");
+            res.status(401).send({
+                error: "userId isnt valid",
+                Valid: false
+            });
+            return
+        } else {
+            // checks if userId in database is the same as the userId in the body
+            if (req.body.userId == userId) {
+                res.status(200).send({
+                    Valid: true
+                })
+            } else {
+                console.log("userId isnt valid");
+                res.status(401).send({
+                    error: "userId isnt valid",
+                    Valid: false
+                });
+            }
         }
         // if there is any problem, the api will send the error back and also display it inside the console
     } catch (error) {
