@@ -29,11 +29,6 @@ const client = new MongoClient(uri, {
 });
 
 
-//temp
-// const password
-// const username
-//temp
-
 // test to see if api works
 app.get('/', async (req, res) => {
     res.status(300).redirect('info.html');
@@ -52,7 +47,7 @@ app.post('/create-account', async (req, res) => {
     try {
         // make connection to database and perfrom a check if the username and/or the email is already taken
         await client.connect();
-        const data = client.db().collection('user_data');
+        const data = client.db("Courseproject").collection('user_data');
         const checkUsername = await data.findOne({
             username: req.body.username
         });
@@ -60,7 +55,6 @@ app.post('/create-account', async (req, res) => {
         const checkEmail = await data.findOne({
             email: req.body.email
         })
-        console.log(checkUsername);
         if (checkUsername) {
             res.status(409).send({
                 error: "the username is already taken"
@@ -74,7 +68,7 @@ app.post('/create-account', async (req, res) => {
             return
         }
         //if username and email are not taken, the new account will be created and stored on the database
-        if (checkusername == null && checkemail == null) {
+        if (checkUsername == null && checkEmail == null) {
             const newuser = {
                 "username": req.body.username,
                 "email": req.body.email,
@@ -90,7 +84,6 @@ app.post('/create-account', async (req, res) => {
             //sends back the userId that was created so the user can stay logged in
             res.status(200).send({
                 succes: "successfully created new useraccount",
-                id: userId
             });
         }
         // if there is any problem, the api will send the error back and also display it inside the console
@@ -179,7 +172,6 @@ app.post('/loginId', async (req, res) => {
         })
         // if userId doesn't exist, return a error with a message
         if (userId == null) {
-            console.log(userId);
             console.log("userId isnt valid");
             res.status(401).send({
                 error: "userId isnt valid",
@@ -252,7 +244,6 @@ app.post('/createEvent', async (req, res) => {
             res.status(401).send("userId is invalid")
         } else {
             // if userId exist, create a new object where we store all event details.
-            console.log(checkUserId._id);
             const newEvent = {
                 "title": req.body.title,
                 "description": req.body.description,
@@ -268,7 +259,6 @@ app.post('/createEvent', async (req, res) => {
             const checkEvent = await eventData.findOne({
                 title: newEvent.title
             })
-            console.log(checkEvent);
             // if there is no event with same title, store new event in database
             if (checkEvent == null) {
                 let insertEvent = await eventData.insertOne(newEvent);
